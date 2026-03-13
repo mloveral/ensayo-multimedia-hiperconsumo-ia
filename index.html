@@ -1,0 +1,1606 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hiperconsumo 4.0</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Unbounded:wght@300;400;700;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --ink: #0a0804;
+      --paper: #f5f0e8;
+      --cream: #ede8dc;
+      --red: #c0392b;
+      --red-dim: #7a2218;
+      --gold: #b8960c;
+      --gold-light: #e8c547;
+      --gray: #888070;
+      --gray-light: #ccc4b0;
+      --white: #faf8f4;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--ink);
+      color: var(--paper);
+      font-family: 'Space Mono', monospace;
+      overflow-x: hidden;
+      cursor: crosshair;
+    }
+
+    /* ── CUSTOM SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--ink); }
+    ::-webkit-scrollbar-thumb { background: var(--red); }
+
+    /* ── PROGRESS BAR ── */
+    #progress-bar {
+      position: fixed; top: 0; left: 0; height: 3px;
+      background: linear-gradient(90deg, var(--red), var(--gold));
+      width: 0%; z-index: 1000; transition: width 0.1s linear;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 999;
+      padding: 1.2rem 2.5rem;
+      display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      backdrop-filter: blur(20px);
+      background: rgba(10,8,4,0.7);
+    }
+
+    .nav-logo {
+      font-family: 'Unbounded', sans-serif;
+      font-size: 0.65rem; font-weight: 700;
+      letter-spacing: 0.3em; color: var(--gold);
+      text-transform: uppercase;
+    }
+
+    .nav-links {
+      display: flex; gap: 2.5rem; list-style: none;
+    }
+
+    .nav-links a {
+      font-size: 0.6rem; letter-spacing: 0.2em;
+      color: var(--gray-light); text-decoration: none;
+      text-transform: uppercase;
+      transition: color 0.3s;
+      position: relative;
+    }
+
+    .nav-links a::after {
+      content: ''; position: absolute; bottom: -4px; left: 0;
+      width: 0; height: 1px; background: var(--red);
+      transition: width 0.3s;
+    }
+
+    .nav-links a:hover { color: var(--white); }
+    .nav-links a:hover::after { width: 100%; }
+
+    /* ── HERO / HOOK ── */
+    #hook {
+      height: 100vh; min-height: 700px;
+      display: grid; grid-template-rows: 1fr auto;
+      position: relative; overflow: hidden;
+    }
+
+    .hero-bg {
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 20% 50%, rgba(192,57,43,0.15) 0%, transparent 60%),
+                  radial-gradient(ellipse at 80% 20%, rgba(184,150,12,0.08) 0%, transparent 50%);
+    }
+
+    /* Animated noise grain */
+    .grain {
+      position: fixed; inset: -200%;
+      width: 400%; height: 400%;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none; z-index: 1; opacity: 0.35;
+      animation: grain-anim 0.5s steps(1) infinite;
+    }
+
+    @keyframes grain-anim {
+      0%   { transform: translate(0,0); }
+      10%  { transform: translate(-5%,-10%); }
+      20%  { transform: translate(-15%,5%); }
+      30%  { transform: translate(7%,-25%); }
+      40%  { transform: translate(-5%,25%); }
+      50%  { transform: translate(-15%,10%); }
+      60%  { transform: translate(15%,0); }
+      70%  { transform: translate(0,15%); }
+      80%  { transform: translate(3%,35%); }
+      90%  { transform: translate(-10%,10%); }
+      100% { transform: translate(5%,5%); }
+    }
+
+    .hero-content {
+      display: flex; flex-direction: column;
+      justify-content: center; align-items: flex-start;
+      padding: 0 8vw; padding-top: 80px;
+      z-index: 2; position: relative;
+      max-width: 900px;
+    }
+
+    .hero-eyebrow {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.6rem; letter-spacing: 0.4em;
+      color: var(--red); text-transform: uppercase;
+      margin-bottom: 2rem;
+      display: flex; align-items: center; gap: 1rem;
+    }
+
+    .hero-eyebrow::before {
+      content: ''; display: block;
+      width: 40px; height: 1px; background: var(--red);
+    }
+
+    .hero-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(3rem, 8vw, 7rem);
+      font-weight: 900; line-height: 0.95;
+      margin-bottom: 1.5rem;
+    }
+
+    .hero-title .accent { color: var(--red); font-style: italic; }
+    .hero-title .version {
+      font-family: 'Unbounded', sans-serif;
+      font-size: 0.4em; font-weight: 300;
+      vertical-align: top; color: var(--gold);
+      letter-spacing: 0.1em;
+    }
+
+    .hero-subtitle {
+      font-size: 0.85rem; line-height: 1.8;
+      color: var(--gray-light); max-width: 520px;
+      margin-bottom: 3rem;
+    }
+
+    .hero-question {
+      display: inline-block;
+      border: 1px solid var(--red);
+      padding: 1.2rem 2rem;
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: 1.05rem;
+      color: var(--paper);
+      position: relative; overflow: hidden;
+      cursor: default;
+    }
+
+    .hero-question::before {
+      content: ''; position: absolute;
+      left: 0; top: 0; bottom: 0; width: 0;
+      background: var(--red); opacity: 0.1;
+      transition: width 1s ease;
+    }
+
+    .hero-question:hover::before { width: 100%; }
+
+    .scroll-cue {
+      z-index: 2; padding: 2rem 8vw;
+      display: flex; align-items: center; gap: 1rem;
+      font-size: 0.55rem; letter-spacing: 0.3em;
+      color: var(--gray); text-transform: uppercase;
+    }
+
+    .scroll-line {
+      width: 60px; height: 1px;
+      background: linear-gradient(90deg, var(--gray), transparent);
+      animation: pulse-line 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-line {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 1; }
+    }
+
+    /* ── VIDEO HOOK SECTION ── */
+    #video-hook {
+      background: #000;
+      padding: 0 0 6rem;
+      position: relative;
+    }
+
+    .video-comparison {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 0; position: relative;
+    }
+
+    @media (max-width: 768px) {
+      .video-comparison { grid-template-columns: 1fr; }
+    }
+
+    .video-panel {
+      position: relative; overflow: hidden;
+    }
+
+    .video-panel-label {
+      position: absolute; top: 0; left: 0; right: 0;
+      padding: 1.5rem 2rem;
+      background: linear-gradient(180deg, rgba(0,0,0,0.9) 0%, transparent 100%);
+      z-index: 3;
+      font-size: 0.55rem; letter-spacing: 0.3em;
+      text-transform: uppercase;
+    }
+
+    .video-panel-label .era {
+      color: var(--gray); font-size: 0.5rem;
+      display: block; margin-bottom: 0.3rem;
+    }
+
+    .video-panel-label .title-label { color: var(--gold); }
+
+    .video-panel iframe {
+      width: 100%; aspect-ratio: 16/9;
+      border: none; display: block;
+      filter: brightness(0.9);
+    }
+
+    .vs-divider {
+      position: absolute; left: 50%; top: 50%;
+      transform: translate(-50%, -50%);
+      width: 60px; height: 60px;
+      background: var(--ink);
+      border: 2px solid var(--red);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Playfair Display', serif;
+      font-style: italic; font-weight: 700;
+      font-size: 1.1rem; color: var(--red);
+      z-index: 10;
+    }
+
+    .hook-question-block {
+      max-width: 700px; margin: 5rem auto 0;
+      text-align: center; padding: 0 2rem;
+    }
+
+    .hook-question-block h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      font-style: italic; line-height: 1.3;
+      margin-bottom: 1.5rem;
+    }
+
+    .hook-question-block h2 em { color: var(--red); font-style: normal; }
+
+    .hook-question-block p {
+      color: var(--gray-light); font-size: 0.8rem;
+      line-height: 1.9;
+    }
+
+    /* ── CHAPTER SECTIONS ── */
+    .chapter {
+      position: relative; overflow: hidden;
+    }
+
+    .chapter-header {
+      padding: 8rem 8vw 4rem;
+      position: relative;
+    }
+
+    .chapter-number {
+      font-family: 'Unbounded', sans-serif;
+      font-size: clamp(6rem, 18vw, 16rem);
+      font-weight: 900;
+      color: rgba(255,255,255,0.03);
+      position: absolute; top: 2rem; right: 4vw;
+      line-height: 1; pointer-events: none;
+      user-select: none;
+    }
+
+    .chapter-tag {
+      font-size: 0.55rem; letter-spacing: 0.4em;
+      color: var(--red); text-transform: uppercase;
+      display: flex; align-items: center; gap: 0.8rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .chapter-tag::before {
+      content: ''; display: block;
+      width: 30px; height: 1px; background: var(--red);
+    }
+
+    .chapter-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2rem, 5vw, 4rem);
+      font-weight: 700; line-height: 1.15;
+      max-width: 700px;
+    }
+
+    .chapter-title em { color: var(--gold); font-style: italic; }
+
+    /* ── TEXT CONTENT ── */
+    .text-block {
+      padding: 2rem 8vw;
+      max-width: 1200px;
+    }
+
+    .text-block p {
+      font-size: 0.92rem; line-height: 2;
+      color: var(--gray-light); margin-bottom: 2rem;
+    }
+
+    .text-block p strong { color: var(--paper); font-weight: 700; }
+
+    /* ── PULLQUOTE ── */
+    .pullquote {
+      padding: 4rem 8vw;
+      position: relative;
+    }
+
+    .pullquote-inner {
+      border-left: 3px solid var(--red);
+      padding-left: 3rem;
+      max-width: 700px;
+    }
+
+    .pullquote blockquote {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.3rem, 3vw, 2.2rem);
+      font-style: italic;
+      line-height: 1.5;
+      color: var(--paper);
+      margin-bottom: 1.5rem;
+    }
+
+    .pullquote cite {
+      font-size: 0.6rem; letter-spacing: 0.2em;
+      color: var(--gray); text-transform: uppercase;
+      font-style: normal;
+    }
+
+    /* ── STATS CARDS ── */
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1px; background: rgba(255,255,255,0.06);
+      margin: 4rem 8vw;
+    }
+
+    .stat-card {
+      background: var(--ink);
+      padding: 3rem 2.5rem;
+      position: relative; overflow: hidden;
+      transition: background 0.3s;
+    }
+
+    .stat-card::before {
+      content: ''; position: absolute;
+      top: 0; left: 0; right: 0; height: 2px;
+      background: var(--red); transform: scaleX(0);
+      transform-origin: left; transition: transform 0.4s ease;
+    }
+
+    .stat-card:hover { background: rgba(192,57,43,0.06); }
+    .stat-card:hover::before { transform: scaleX(1); }
+
+    .stat-number {
+      font-family: 'Unbounded', sans-serif;
+      font-size: clamp(2.5rem, 6vw, 4.5rem);
+      font-weight: 900; color: var(--gold-light);
+      line-height: 1; margin-bottom: 0.5rem;
+      display: flex; align-items: baseline; gap: 0.2rem;
+    }
+
+    .stat-number .plus { color: var(--red); font-size: 0.5em; }
+
+    .stat-label {
+      font-size: 0.65rem; letter-spacing: 0.15em;
+      color: var(--gray); text-transform: uppercase;
+      line-height: 1.6;
+    }
+
+    .stat-source {
+      font-size: 0.5rem; color: rgba(255,255,255,0.2);
+      margin-top: 1rem;
+    }
+
+    /* ── CASE STUDY HEINEKEN ── */
+    #heineken {
+      background: linear-gradient(180deg, var(--ink) 0%, #0e0a06 100%);
+    }
+
+    .case-study-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 1px; background: rgba(255,255,255,0.06);
+      margin: 2rem 8vw 4rem;
+    }
+
+    @media (max-width: 900px) {
+      .case-study-grid { grid-template-columns: 1fr; }
+    }
+
+    .case-panel {
+      background: var(--ink); padding: 3.5rem 3rem;
+      position: relative; overflow: hidden;
+    }
+
+    .case-panel::after {
+      content: ''; position: absolute;
+      bottom: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+    }
+
+    .case-panel-year {
+      font-family: 'Unbounded', sans-serif;
+      font-size: 4rem; font-weight: 900;
+      color: rgba(255,255,255,0.04);
+      position: absolute; top: 1rem; right: 1.5rem;
+    }
+
+    .case-panel-tag {
+      display: inline-block;
+      padding: 0.3rem 0.8rem;
+      border: 1px solid var(--gold);
+      font-size: 0.5rem; letter-spacing: 0.25em;
+      color: var(--gold); text-transform: uppercase;
+      margin-bottom: 1.5rem;
+    }
+
+    .case-panel h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.6rem; font-weight: 700;
+      margin-bottom: 1.2rem; line-height: 1.2;
+    }
+
+    .case-panel p {
+      font-size: 0.8rem; line-height: 1.9;
+      color: var(--gray-light); margin-bottom: 1.5rem;
+    }
+
+    .case-metric {
+      display: flex; gap: 1rem; margin-top: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .metric-pill {
+      padding: 0.6rem 1.2rem;
+      background: rgba(184,150,12,0.1);
+      border: 1px solid rgba(184,150,12,0.3);
+      font-family: 'Unbounded', sans-serif;
+      font-size: 0.7rem; color: var(--gold-light);
+      font-weight: 700;
+    }
+
+    .metric-pill .metric-sub {
+      display: block; font-size: 0.45rem;
+      color: var(--gray); font-weight: 400;
+      margin-top: 0.2rem; letter-spacing: 0.1em;
+    }
+
+    /* ── VIDEO EMBED ── */
+    .video-embed {
+      margin: 3rem 8vw;
+      position: relative;
+    }
+
+    .video-embed-label {
+      font-size: 0.55rem; letter-spacing: 0.3em;
+      color: var(--gray); text-transform: uppercase;
+      margin-bottom: 1rem;
+      display: flex; align-items: center; gap: 0.8rem;
+    }
+
+    .video-embed-label::before {
+      content: '▶'; font-size: 0.5rem; color: var(--red);
+    }
+
+    .video-embed iframe {
+      width: 100%; max-width: 760px;
+      aspect-ratio: 16/9; border: none;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    /* ── TIMELINE / EVOLUTION ── */
+    .timeline {
+      padding: 4rem 8vw;
+      position: relative;
+    }
+
+    .timeline::before {
+      content: ''; position: absolute;
+      left: calc(8vw + 1.5rem); top: 0; bottom: 0;
+      width: 1px; background: rgba(255,255,255,0.08);
+    }
+
+    .timeline-item {
+      display: grid; grid-template-columns: 3rem 1fr;
+      gap: 2rem; margin-bottom: 3.5rem;
+      position: relative;
+    }
+
+    .timeline-dot {
+      width: 12px; height: 12px;
+      border: 2px solid var(--red);
+      border-radius: 50%;
+      margin-top: 0.3rem;
+      background: var(--ink);
+      position: relative; z-index: 1;
+      margin-left: 0.75rem;
+      flex-shrink: 0;
+      transition: background 0.3s, box-shadow 0.3s;
+    }
+
+    .timeline-item:hover .timeline-dot {
+      background: var(--red);
+      box-shadow: 0 0 20px rgba(192,57,43,0.5);
+    }
+
+    .timeline-content {}
+
+    .timeline-year {
+      font-family: 'Unbounded', sans-serif;
+      font-size: 0.7rem; color: var(--red);
+      margin-bottom: 0.5rem; font-weight: 700;
+    }
+
+    .timeline-content h4 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.3rem; margin-bottom: 0.8rem;
+    }
+
+    .timeline-content p {
+      font-size: 0.8rem; color: var(--gray-light);
+      line-height: 1.8;
+    }
+
+    /* ── INVISIBILITY SECTION ── */
+    #invisibilidad {
+      background: var(--ink);
+      position: relative;
+    }
+
+    .glitch-text {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2.5rem, 6vw, 5rem);
+      font-weight: 900; position: relative;
+      display: inline-block;
+    }
+
+    .glitch-text::before,
+    .glitch-text::after {
+      content: attr(data-text);
+      position: absolute; top: 0; left: 0;
+      width: 100%; height: 100%;
+    }
+
+    .glitch-text::before {
+      color: var(--red); clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
+      animation: glitch-top 3s infinite;
+      left: 2px;
+    }
+
+    .glitch-text::after {
+      color: var(--gold); clip-path: polygon(0 60%, 100% 60%, 100% 100%, 0 100%);
+      animation: glitch-bottom 3s infinite;
+      left: -2px;
+    }
+
+    @keyframes glitch-top {
+      0%, 90%, 100% { transform: translateX(0); opacity: 0; }
+      91% { transform: translateX(-3px); opacity: 1; }
+      93% { transform: translateX(3px); opacity: 1; }
+      95% { transform: translateX(0); opacity: 0; }
+    }
+
+    @keyframes glitch-bottom {
+      0%, 92%, 100% { transform: translateX(0); opacity: 0; }
+      93% { transform: translateX(3px); opacity: 1; }
+      96% { transform: translateX(-3px); opacity: 1; }
+      98% { transform: translateX(0); opacity: 0; }
+    }
+
+    /* ── INTERACTIVE REFLECTION ── */
+    #reflexion {
+      background: linear-gradient(180deg, #0e0a06 0%, #080503 100%);
+      padding: 8rem 8vw;
+    }
+
+    .reflection-intro {
+      text-align: center; max-width: 650px;
+      margin: 0 auto 5rem;
+    }
+
+    .reflection-intro h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2rem, 4vw, 3.5rem);
+      margin-bottom: 1.5rem; line-height: 1.2;
+    }
+
+    .reflection-intro p {
+      color: var(--gray-light); font-size: 0.85rem; line-height: 1.9;
+    }
+
+    .questions-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.5px; background: rgba(255,255,255,0.05);
+      max-width: 1100px; margin: 0 auto;
+    }
+
+    .question-card {
+      background: #080503; padding: 3rem 2.5rem;
+      cursor: pointer; position: relative; overflow: hidden;
+      transition: background 0.3s;
+    }
+
+    .question-card::before {
+      content: ''; position: absolute;
+      inset: 0; background: var(--red);
+      opacity: 0; transition: opacity 0.3s;
+    }
+
+    .question-card:hover { background: rgba(192,57,43,0.05); }
+
+    .q-number {
+      font-family: 'Unbounded', sans-serif;
+      font-size: 3rem; font-weight: 900;
+      color: rgba(255,255,255,0.04);
+      position: absolute; top: 1.5rem; right: 2rem;
+    }
+
+    .question-card h3 {
+      font-family: 'Playfair Display', serif;
+      font-style: italic; font-size: 1.1rem;
+      color: var(--paper); line-height: 1.5;
+      margin-bottom: 1.5rem; position: relative;
+    }
+
+    .question-card .expand-btn {
+      font-size: 0.55rem; letter-spacing: 0.25em;
+      color: var(--red); text-transform: uppercase;
+      display: flex; align-items: center; gap: 0.5rem;
+      background: none; border: none; cursor: pointer;
+      font-family: 'Space Mono', monospace;
+      position: relative; padding: 0;
+    }
+
+    .question-card .expand-btn::before {
+      content: '+'; font-size: 1rem; color: var(--red);
+    }
+
+    .question-answer {
+      display: none; margin-top: 1.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      font-size: 0.78rem; color: var(--gray-light);
+      line-height: 1.9; position: relative;
+    }
+
+    .question-answer.open { display: block; }
+
+    /* ── JOHNNIE WALKER ── */
+    .experience-block {
+      margin: 4rem 8vw;
+      border: 1px solid rgba(255,255,255,0.08);
+      display: grid; grid-template-columns: 1fr 1fr;
+      overflow: hidden;
+    }
+
+    @media (max-width: 768px) {
+      .experience-block { grid-template-columns: 1fr; }
+    }
+
+    .exp-visual {
+      background: linear-gradient(135deg, #1a0e00, #2d1800);
+      padding: 4rem 3rem;
+      display: flex; flex-direction: column;
+      justify-content: center;
+      position: relative; overflow: hidden;
+    }
+
+    .exp-visual::before {
+      content: 'JW'; position: absolute;
+      font-family: 'Unbounded', sans-serif;
+      font-size: 12rem; font-weight: 900;
+      color: rgba(184,150,12,0.06);
+      top: -2rem; left: -2rem;
+    }
+
+    .exp-badge {
+      display: inline-block; border: 1px solid var(--gold);
+      padding: 0.3rem 0.8rem;
+      font-size: 0.5rem; letter-spacing: 0.25em;
+      color: var(--gold); text-transform: uppercase;
+      margin-bottom: 1.5rem;
+    }
+
+    .exp-visual h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 2rem; margin-bottom: 1rem;
+      color: var(--gold-light);
+    }
+
+    .exp-visual p {
+      font-size: 0.75rem; color: rgba(232,197,71,0.6);
+      line-height: 1.8;
+    }
+
+    .exp-stat {
+      margin-top: 2.5rem;
+      display: flex; align-items: baseline; gap: 0.5rem;
+    }
+
+    .exp-stat-num {
+      font-family: 'Unbounded', sans-serif;
+      font-size: 3.5rem; font-weight: 900; color: var(--gold);
+      line-height: 1;
+    }
+
+    .exp-stat-label {
+      font-size: 0.6rem; color: var(--gray);
+      letter-spacing: 0.15em; text-transform: uppercase;
+      line-height: 1.4;
+    }
+
+    .exp-text {
+      padding: 4rem 3rem; background: #0e0a06;
+    }
+
+    .exp-text h4 {
+      font-family: 'Playfair Display', serif;
+      font-style: italic; font-size: 1.4rem;
+      margin-bottom: 1.5rem; color: var(--paper);
+    }
+
+    .exp-text p {
+      font-size: 0.8rem; color: var(--gray-light);
+      line-height: 1.9; margin-bottom: 1.2rem;
+    }
+
+    /* ── BIG QUOTE SECTION ── */
+    .mega-quote {
+      padding: 10rem 8vw;
+      text-align: center;
+      position: relative; overflow: hidden;
+    }
+
+    .mega-quote::before {
+      content: '"'; position: absolute;
+      font-family: 'Playfair Display', serif;
+      font-size: 40vw; color: rgba(255,255,255,0.02);
+      top: -5vw; left: -3vw;
+      line-height: 1; pointer-events: none;
+    }
+
+    .mega-quote blockquote {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.5rem, 4vw, 3rem);
+      font-style: italic; line-height: 1.4;
+      max-width: 900px; margin: 0 auto 2rem;
+      position: relative;
+    }
+
+    .mega-quote blockquote em { color: var(--red); font-style: normal; }
+
+    .mega-quote cite {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.6rem; letter-spacing: 0.25em;
+      color: var(--gray); text-transform: uppercase;
+    }
+
+    /* ── CONCLUSION ── */
+    #conclusion {
+      background: linear-gradient(180deg, #080503 0%, #000 100%);
+      padding: 10rem 8vw 6rem;
+    }
+
+    .conclusion-grid {
+      display: grid; grid-template-columns: 1fr 2fr;
+      gap: 6rem; max-width: 1100px; margin: 0 auto;
+    }
+
+    @media (max-width: 768px) {
+      .conclusion-grid { grid-template-columns: 1fr; gap: 3rem; }
+    }
+
+    .conclusion-sidebar {}
+
+    .conclusion-sidebar h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2.5rem, 5vw, 4rem);
+      font-weight: 900; line-height: 1;
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      color: rgba(255,255,255,0.06);
+      height: 400px;
+    }
+
+    @media (max-width: 768px) {
+      .conclusion-sidebar h2 { writing-mode: horizontal-tb; height: auto; font-size: 2rem; }
+    }
+
+    .conclusion-main h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.8rem, 3vw, 2.8rem);
+      font-style: italic; margin-bottom: 2rem;
+      line-height: 1.3;
+    }
+
+    .conclusion-main p {
+      font-size: 0.88rem; color: var(--gray-light);
+      line-height: 2; margin-bottom: 1.8rem;
+    }
+
+    .open-questions {
+      margin-top: 3rem; padding: 3rem;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .open-questions h4 {
+      font-size: 0.55rem; letter-spacing: 0.3em;
+      color: var(--red); text-transform: uppercase;
+      margin-bottom: 2rem;
+    }
+
+    .open-questions ul {
+      list-style: none; display: flex;
+      flex-direction: column; gap: 1.5rem;
+    }
+
+    .open-questions li {
+      font-family: 'Playfair Display', serif;
+      font-style: italic; font-size: 1rem;
+      color: var(--paper); line-height: 1.5;
+      padding-left: 1.5rem; position: relative;
+    }
+
+    .open-questions li::before {
+      content: '→'; position: absolute; left: 0;
+      color: var(--red); font-style: normal;
+      font-family: 'Space Mono', monospace;
+    }
+
+    /* ── BIBLIOGRAPHY ── */
+    #bibliografia {
+      padding: 6rem 8vw;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .biblio-header {
+      font-size: 0.55rem; letter-spacing: 0.4em;
+      color: var(--gray); text-transform: uppercase;
+      margin-bottom: 3rem;
+    }
+
+    .biblio-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+    }
+
+    .biblio-item {
+      padding: 1.5rem;
+      border-left: 1px solid rgba(255,255,255,0.06);
+      transition: border-color 0.3s;
+    }
+
+    .biblio-item:hover { border-color: var(--red); }
+
+    .biblio-item p {
+      font-size: 0.7rem; color: var(--gray);
+      line-height: 1.8;
+    }
+
+    .biblio-item a {
+      color: var(--gold); text-decoration: none;
+      font-size: 0.6rem;
+      display: block; margin-top: 0.5rem;
+      word-break: break-all;
+    }
+
+    .biblio-item a:hover { color: var(--gold-light); text-decoration: underline; }
+
+    /* ── FOOTER ── */
+    footer {
+      padding: 3rem 8vw;
+      border-top: 1px solid rgba(255,255,255,0.04);
+      display: flex; justify-content: space-between;
+      align-items: center; flex-wrap: wrap; gap: 1rem;
+    }
+
+    footer .footer-brand {
+      font-family: 'Unbounded', sans-serif;
+      font-size: 0.6rem; font-weight: 700;
+      letter-spacing: 0.25em; color: var(--gold);
+    }
+
+    footer .footer-note {
+      font-size: 0.55rem; color: var(--gray);
+      letter-spacing: 0.1em;
+    }
+
+    /* ── REVEAL ANIMATIONS ── */
+    .reveal {
+      opacity: 0; transform: translateY(30px);
+      transition: opacity 0.8s ease, transform 0.8s ease;
+    }
+
+    .reveal.visible {
+      opacity: 1; transform: translateY(0);
+    }
+
+    .reveal-delay-1 { transition-delay: 0.1s; }
+    .reveal-delay-2 { transition-delay: 0.2s; }
+    .reveal-delay-3 { transition-delay: 0.3s; }
+    .reveal-delay-4 { transition-delay: 0.4s; }
+
+    /* ── HORIZONTAL MARQUEE ── */
+    .marquee-wrap {
+      overflow: hidden; padding: 2rem 0;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .marquee-track {
+      display: flex; gap: 4rem;
+      animation: marquee 25s linear infinite;
+      white-space: nowrap;
+    }
+
+    .marquee-track span {
+      font-family: 'Unbounded', sans-serif;
+      font-size: 0.6rem; font-weight: 300;
+      letter-spacing: 0.4em; color: rgba(255,255,255,0.12);
+      text-transform: uppercase; flex-shrink: 0;
+    }
+
+    .marquee-track span.red { color: rgba(192,57,43,0.4); }
+
+    @keyframes marquee {
+      from { transform: translateX(0); }
+      to { transform: translateX(-50%); }
+    }
+
+    /* ── DIVIDER ── */
+    .section-divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+      margin: 0 8vw;
+    }
+
+    /* ── MOBILE ADJUSTMENTS ── */
+    @media (max-width: 600px) {
+      .nav-links { display: none; }
+      .vs-divider { display: none; }
+      .hero-question { font-size: 0.9rem; }
+    }
+
+    /* ── CHAPTER BACKGROUNDS ── */
+    #evolucion { background: var(--ink); }
+    #personalizacion { background: linear-gradient(180deg, #0a0804 0%, #0d0b07 100%); }
+    #heineken { background: linear-gradient(180deg, #0d0b07 0%, #080503 100%); }
+    #invisibilidad { background: #080503; }
+    #johnnie { background: linear-gradient(180deg, #080503 0%, #060402 100%); }
+
+    /* Image styling */
+    .inline-image {
+      margin: 3rem 8vw;
+      position: relative; overflow: hidden;
+    }
+
+    .inline-image img {
+      width: 100%; max-width: 600px;
+      display: block;
+      filter: grayscale(20%) contrast(1.05);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .inline-image figcaption {
+      font-size: 0.55rem; color: var(--gray);
+      letter-spacing: 0.15em; margin-top: 0.8rem;
+      text-transform: uppercase;
+    }
+
+    /* Scan line effect */
+    .scanlines {
+      position: fixed; inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.04) 2px,
+        rgba(0,0,0,0.04) 4px
+      );
+      pointer-events: none; z-index: 2;
+    }
+
+    /* Highlight spans */
+    .hl-red { color: var(--red); }
+    .hl-gold { color: var(--gold-light); }
+    .hl-white { color: var(--white); font-weight: 700; }
+  </style>
+</head>
+<body>
+
+  <!-- Atmospheric effects -->
+  <div class="grain"></div>
+  <div class="scanlines"></div>
+  <div id="progress-bar"></div>
+
+  <!-- Navigation -->
+  <nav>
+    <div class="nav-logo">Hiperconsumo 4.0</div>
+    <ul class="nav-links">
+      <li><a href="#hook">Inicio</a></li>
+      <li><a href="#evolucion">Evolución</a></li>
+      <li><a href="#heineken">Caso Heineken</a></li>
+      <li><a href="#invisibilidad">Invisibilidad</a></li>
+      <li><a href="#reflexion">Reflexión</a></li>
+    </ul>
+  </nav>
+
+  <!-- ══════════ HERO ══════════ -->
+  <section id="hook">
+    <div class="hero-bg"></div>
+    <div class="hero-content">
+      <div class="hero-eyebrow reveal">Ensayo Multimedia · 2025</div>
+      <h1 class="hero-title reveal reveal-delay-1">
+        Hiper<span class="accent">consumo</span><span class="version"> 4.0</span>
+      </h1>
+      <p class="hero-subtitle reveal reveal-delay-2">
+        Cómo la Inteligencia Artificial y las Redes Sociales reescriben la publicidad y erosionan la conciencia del consumidor.
+      </p>
+      <div class="hero-question reveal reveal-delay-3">
+        ¿Cuál de estos dos anuncios te influye más,<br>sin que te des cuenta?
+      </div>
+    </div>
+    <div class="scroll-cue">
+      <div class="scroll-line"></div>
+      Desplázate para descubrir
+    </div>
+  </section>
+
+  <!-- ══════════ VIDEO HOOK ══════════ -->
+  <section id="video-hook">
+    <div class="video-comparison">
+      <div class="video-panel">
+        <div class="video-panel-label">
+          <span class="era">Años 80 · Publicidad Tradicional</span>
+          <span class="title-label">El anuncio que sabes que es un anuncio</span>
+        </div>
+        <!-- Truman Show cocoa scene as proxy for traditional ad -->
+        <iframe
+          src="https://www.youtube.com/embed/MzKSQrhX7BM"
+          title="The Truman Show - Cocoa Scene"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen>
+        </iframe>
+      </div>
+
+      <div class="vs-divider">vs</div>
+
+      <div class="video-panel">
+        <div class="video-panel-label">
+          <span class="era">2012 · Product Placement Moderno</span>
+          <span class="title-label">El anuncio disfrazado de entretenimiento</span>
+        </div>
+        <iframe
+          src="https://www.youtube.com/embed/VHz30rlNHCc"
+          title="Heineken Skyfall James Bond"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen>
+        </iframe>
+      </div>
+    </div>
+
+    <div class="hook-question-block reveal">
+      <h2>La publicidad más poderosa ya no se parece a un <em>anuncio</em>.</h2>
+      <p>
+        La publicidad tradicional interrumpía nuestro entretenimiento. La contemporánea, potenciada por Inteligencia Artificial, se ha entrelazado tan profundamente con él que ya no la percibimos como tal. Este ensayo analiza cómo esa invisibilidad se convierte en la herramienta de persuasión más eficaz de la historia.
+      </p>
+    </div>
+  </section>
+
+  <!-- MARQUEE -->
+  <div class="marquee-wrap">
+    <div class="marquee-track">
+      <span>Hiperpersonalización</span><span class="red">·</span>
+      <span>Product Placement Dinámico</span><span class="red">·</span>
+      <span>IA Publicitaria</span><span class="red">·</span>
+      <span>Sobreconsumo</span><span class="red">·</span>
+      <span>Invisibilidad</span><span class="red">·</span>
+      <span>Autonomía del Consumidor</span><span class="red">·</span>
+      <span>Hiperpersonalización</span><span class="red">·</span>
+      <span>Product Placement Dinámico</span><span class="red">·</span>
+      <span>IA Publicitaria</span><span class="red">·</span>
+      <span>Sobreconsumo</span><span class="red">·</span>
+      <span>Invisibilidad</span><span class="red">·</span>
+      <span>Autonomía del Consumidor</span><span class="red">·</span>
+    </div>
+  </div>
+
+  <!-- ══════════ CAPÍTULO 1 ══════════ -->
+  <section id="evolucion" class="chapter">
+    <div class="chapter-header">
+      <span class="chapter-number">01</span>
+      <div class="chapter-tag">Capítulo 1</div>
+      <h2 class="chapter-title reveal">
+        La evolución de la publicidad:<br>
+        De la <em>interrupción</em> a la integración
+      </h2>
+    </div>
+
+    <div class="text-block reveal">
+      <p>
+        La publicidad, hasta hace unos pocos años, funcionaba con la lógica de la <strong>interrupción y de la atracción visual</strong>. Era directa, evidente. El espectador sabía cuándo empezaba y terminaba un anuncio — en la valla publicitaria, en el corte comercial, en el cartel de la calle.
+      </p>
+      <p>
+        Con la llegada de plataformas de streaming, las redes sociales y el consumo bajo demanda, esa lógica comenzó a mostrar sus límites. Netflix, Amazon Prime, HBO Max: el consumidor ahora tiene el poder de <strong>evitar la publicidad tradicional</strong>. Las marcas se vieron forzadas a reinventarse.
+      </p>
+      <p>
+        Fue en este contexto donde la tecnología — y en especial la Inteligencia Artificial — encontró su espacio más fértil. La solución no podía ser simplemente hacer anuncios más llamativos, sino <span class="hl-red">integrar el mensaje comercial dentro del contenido que el usuario sí desea ver</span>. Así nació y se perfeccionó el <em>product placement dinámico</em>.
+      </p>
+    </div>
+
+    <div class="section-divider"></div>
+
+    <!-- Timeline -->
+    <div class="timeline">
+      <div class="chapter-tag" style="padding-left: 5rem;">La evolución cronológica</div>
+
+      <div class="timeline-item reveal">
+        <div class="timeline-dot"></div>
+        <div class="timeline-content">
+          <div class="timeline-year">1980s</div>
+          <h4>La publicidad de la interrupción</h4>
+          <p>Vallas, cortes comerciales, anuncios en prensa. La frontera entre contenido y publicidad era nítida. El consumidor sabía exactamente qué era un anuncio.</p>
+        </div>
+      </div>
+
+      <div class="timeline-item reveal reveal-delay-1">
+        <div class="timeline-dot"></div>
+        <div class="timeline-content">
+          <div class="timeline-year">1980–2010</div>
+          <h4>El product placement estático</h4>
+          <p>Ray-Ban en <em>Top Gun</em> (1986). Pepsi y Nike en <em>Volver al futuro II</em> (1989). La marca se integra en la narrativa, pero de forma igual para todos los espectadores del mundo.</p>
+        </div>
+      </div>
+
+      <div class="timeline-item reveal reveal-delay-2">
+        <div class="timeline-dot"></div>
+        <div class="timeline-content">
+          <div class="timeline-year">2010–2020</div>
+          <h4>El streaming cambia las reglas</h4>
+          <p>El consumidor puede saltarse los anuncios o elegir contenido sin interrupciones. Las marcas necesitan una nueva estrategia de penetración en el imaginario del usuario.</p>
+        </div>
+      </div>
+
+      <div class="timeline-item reveal reveal-delay-3">
+        <div class="timeline-dot"></div>
+        <div class="timeline-content">
+          <div class="timeline-year">2020 → hoy</div>
+          <h4>El product placement dinámico con IA</h4>
+          <p>Algoritmos de reconocimiento de imágenes + análisis de datos en tiempo real + edición digital automatizada. El producto insertado puede ser <span class="hl-red">diferente para cada espectador</span>, según su perfil de consumo, ubicación geográfica e historial de búsquedas.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="pullquote reveal">
+      <div class="pullquote-inner">
+        <blockquote>
+          "Con la llegada de la IA, las marcas han adquirido la capacidad de modificar en tiempo real la inserción de productos, permitiendo una publicidad segmentada según el perfil de cada usuario."
+        </blockquote>
+        <cite>— Martín García, A. (2025). Revista de Comunicación de la SEECI, 58.</cite>
+      </div>
+    </div>
+
+    <!-- Truman Show parodia section -->
+    <div class="text-block reveal">
+      <p>
+        La historia tiene su propia ironía. En 1998, <em>The Truman Show</em> parodiaba exactamente esto: dentro de la narrativa del reality show, los personajes hacían publicidad de productos de forma deliberada y explícita. Era sátira. Hoy, lo que entonces era ciencia ficción satírica es <strong>tecnología operativa y cotidiana</strong>.
+      </p>
+      <p>
+        Y <em>Pulp Fiction</em> fue más allá: utilizó product placement de marcas completamente ficticias — Red Apple Cigarettes, Big Kahuna Burger — para demostrar que la lógica del producto integrado en la narrativa funciona incluso cuando el producto no existe.
+      </p>
+    </div>
+
+    <figure class="inline-image reveal">
+      <img
+        src="https://isenbergmarketing.wordpress.com/wp-content/uploads/2014/09/tarantino-brands.jpg"
+        alt="Marcas ficticias de Quentin Tarantino en Pulp Fiction"
+        onerror="this.style.display='none'"
+      />
+      <figcaption>Pulp Fiction (1994) · Marcas ficticias como Red Apple Cigarettes y Big Kahuna Burger — product placement de lo que no existe (Lucasmatthew, 2014)</figcaption>
+    </figure>
+  </section>
+
+  <!-- MEGA QUOTE -->
+  <div class="mega-quote">
+    <blockquote>
+      "La capacidad de personalización mejora la aceptación del mensaje publicitario, ya que los productos mostrados tienden a coincidir con las preferencias y hábitos del usuario."
+    </blockquote>
+    <cite>— Martín García, A. (2025)</cite>
+  </div>
+
+  <!-- ══════════ CAPÍTULO 2: HEINEKEN ══════════ -->
+  <section id="heineken" class="chapter">
+    <div class="chapter-header">
+      <span class="chapter-number">02</span>
+      <div class="chapter-tag">Capítulo 2 · Caso de Estudio</div>
+      <h2 class="chapter-title reveal">
+        Heineken y la transición del product placement<br>
+        <em>tradicional al dinámico</em>
+      </h2>
+    </div>
+
+    <div class="text-block reveal">
+      <p>
+        Para comprender cómo se ha transformado el product placement en la era de la Inteligencia Artificial, el caso de Heineken ofrece un ejemplo pragmático y comparativo de primer orden. La compañía ha puesto en práctica tanto el product placement cinematográfico tradicional como el dinámico basado en IA, y los resultados permiten comparar empíricamente la eficacia de uno y otro modelo.
+      </p>
+    </div>
+
+    <!-- Comparison panels -->
+    <div class="case-study-grid reveal">
+      <!-- Panel 1: Skyfall -->
+      <div class="case-panel">
+        <div class="case-panel-year">2012</div>
+        <div class="case-panel-tag">Product Placement Estático</div>
+        <h3>Heineken en Skyfall</h3>
+        <p>
+          Una inversión millonaria que financió <span class="hl-gold">un tercio del presupuesto</span> de la película. La estrategia era aspiracional: asociar Heineken con los valores de sofisticación, aventura y estilo de vida que James Bond representa.
+        </p>
+        <p>
+          Era completamente estático. Todos los espectadores del mundo veían exactamente las mismas escenas con la misma botella en la mano de Daniel Craig. Sin adaptación, sin personalización.
+        </p>
+        <div class="case-metric">
+          <div class="metric-pill">
+            +15%<span class="metric-sub">Notoriedad de marca</span>
+          </div>
+          <div class="metric-pill">
+            +7%<span class="metric-sub">Ventas globales</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel 2: The Boys -->
+      <div class="case-panel">
+        <div class="case-panel-year">2020+</div>
+        <div class="case-panel-tag">Product Placement Dinámico · IA</div>
+        <h3>Heineken en The Boys (Amazon Prime)</h3>
+        <p>
+          La misma escena puede mostrar una botella de Heineken con etiqueta en castellano y una promoción local para un espectador en España, y el mismo producto con información adaptada a otro mercado para un espectador en Alemania.
+        </p>
+        <p>
+          El espectador no ve un anuncio. Está viendo su serie favorita. <span class="hl-red">El algoritmo ha decidido por él.</span>
+        </p>
+        <div class="case-metric">
+          <div class="metric-pill">
+            +25%<span class="metric-sub">Recuerdo de marca</span>
+          </div>
+          <div class="metric-pill">
+            +8%<span class="metric-sub">Ventas en audiencias expuestas</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="video-embed reveal">
+      <div class="video-embed-label">Heineken × James Bond 007 · Skyfall (2012) — El product placement que todos vieron igual</div>
+      <iframe
+        src="https://www.youtube.com/embed/VHz30rlNHCc"
+        title="Skyfall Heineken Spot"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowfullscreen>
+      </iframe>
+    </div>
+
+    <div class="stats-grid reveal">
+      <div class="stat-card">
+        <div class="stat-number">+25<span class="plus">%</span></div>
+        <div class="stat-label">Recuerdo de marca con IA vs. +15% con product placement tradicional</div>
+        <div class="stat-source">Martín García (2025) · SEECI</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">+8<span class="plus">%</span></div>
+        <div class="stat-label">Ventas en audiencias personalizadas (The Boys) vs. +7% (Skyfall)</div>
+        <div class="stat-source">Martín García (2025) · SEECI</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">⅓</div>
+        <div class="stat-label">Del presupuesto de Skyfall fue financiado por Heineken — sin que el espectador lo supiera</div>
+        <div class="stat-source">Rosety (2024) · Tapas Magazine</div>
+      </div>
+    </div>
+
+    <div class="pullquote reveal">
+      <div class="pullquote-inner">
+        <blockquote>
+          "La eficacia publicitaria no solo se mantuvo, sino que superó ampliamente los resultados del modelo tradicional, a pesar de que The Boys es una serie de nicho con audiencias mucho más segmentadas."
+        </blockquote>
+        <cite>— Análisis basado en Martín García, A. (2025)</cite>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ CAPÍTULO 3: INVISIBILIDAD ══════════ -->
+  <section id="invisibilidad" class="chapter">
+    <div class="chapter-header">
+      <span class="chapter-number">03</span>
+      <div class="chapter-tag">Capítulo 3 · Implicaciones para el consumidor</div>
+      <h2 class="chapter-title reveal">
+        La <em>invisibilidad</em> como<br>
+        mecanismo de persuasión
+      </h2>
+    </div>
+
+    <div class="text-block reveal">
+      <p>
+        Lo realmente disruptivo de la publicidad potenciada con IA no es la capacidad de personalización. Es la <strong>imperceptibilidad</strong> con la que opera. Mientras que los anuncios tradicionales son fáciles de identificar, el product placement dinámico se camufla dentro del entretenimiento.
+      </p>
+      <p>
+        El espectador no está viendo un anuncio de cerveza. Está viendo a su personaje favorito bebiendo una cerveza que <span class="hl-red">"casualmente" le interesa</span>. Esa comilla lo cambia todo.
+      </p>
+    </div>
+
+    <div class="pullquote reveal">
+      <div class="pullquote-inner">
+        <blockquote>
+          "La personalización algorítmica permite crear experiencias de marca que el consumidor percibe como 'significativas' o 'casualmente acertadas', sin identificar el entramado tecnológico que hay detrás."
+        </blockquote>
+        <cite>— Gilardini Ricci, P. (2025). El impacto de la IA en el marketing de contenidos. Universitat de Vic.</cite>
+      </div>
+    </div>
+
+    <div class="text-block reveal">
+      <p>
+        Cuando la publicidad ya no <em>parece</em> publicidad, el consumidor baja la guardia. El vínculo emocional con la marca se refuerza, pero lo hace eludiendo los filtros críticos que activaría ante un mensaje publicitario explícito.
+      </p>
+      <p>
+        No se asocia con la <em>intención de consumir</em>, sino con la <strong>experiencia placentera del entretenimiento</strong>. La transacción comercial queda sepultada bajo capas de narrativa y emoción.
+      </p>
+    </div>
+
+    <div class="stats-grid reveal">
+      <div class="stat-card">
+        <div class="stat-number" style="font-size: 1.8rem; color: var(--paper);">Publicidad <span style="color:var(--red)">tradicional</span></div>
+        <div class="stat-label">El consumidor la identifica. Activa filtros críticos. Puede rechazarla conscientemente.</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" style="font-size: 1.8rem; color: var(--paper);">Publicidad <span style="color:var(--gold-light)">integrada con IA</span></div>
+        <div class="stat-label">El consumidor no la percibe como publicidad. Los filtros críticos no se activan. La persuasión opera en el inconsciente.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ JOHNNIE WALKER ══════════ -->
+  <section id="johnnie" class="chapter">
+    <div class="chapter-header">
+      <span class="chapter-number">03b</span>
+      <div class="chapter-tag">Caso adicional · Vínculo emocional</div>
+      <h2 class="chapter-title reveal">
+        Johnnie Walker Halo:<br>
+        <em>Cuando el algoritmo "te conoce"</em>
+      </h2>
+    </div>
+
+    <div class="experience-block reveal">
+      <div class="exp-visual">
+        <div class="exp-badge">Blue Label · Experiencia Inmersiva</div>
+        <h3>Johnnie Walker Halo</h3>
+        <p>
+          Una IA analiza las preferencias del cliente en tienda y genera un patrón visual único impreso al instante en la etiqueta. El cliente se lleva su botella "única" el mismo día.
+        </p>
+        <div class="exp-stat">
+          <div class="exp-stat-num">130<span style="font-size:0.5em; color:var(--red)">%</span></div>
+          <div class="exp-stat-label">Incremento<br>de ventas<br>interanual</div>
+        </div>
+      </div>
+      <div class="exp-text">
+        <h4>"El producto ya no es masivo. Es una extensión de tu identidad."</h4>
+        <p>
+          Cuando un cliente participa en la "creación" de su producto — aunque sea mediante algoritmos —, la botella deja de ser un objeto industrial para convertirse en algo personal. El vínculo emocional se profundiza.
+        </p>
+        <p>
+          El consumidor compra convencido de que es una expresión única de su identidad. En realidad, esa sensación de unicidad ha sido <span class="hl-red">cuidadosamente orquestada por una máquina</span>.
+        </p>
+        <p>
+          Como señala Gilardini Ricci (2025): la personalización algorítmica permite crear experiencias que el consumidor percibe como "significativas", aunque no sea plenamente consciente del entramado tecnológico detrás de ellas.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ REFLEXIÓN INTERACTIVA ══════════ -->
+  <section id="reflexion">
+    <div class="reflection-intro">
+      <div class="chapter-tag" style="justify-content: center;">Capítulo 4 · Reflexiones abiertas</div>
+      <h2 class="reveal">
+        Las preguntas que quedan sin respuesta
+      </h2>
+      <p class="reveal reveal-delay-1">
+        La inteligencia artificial seguirá perfeccionando sus técnicas. La publicidad será cada vez más personalizada, más integrada, más "invisible". ¿Tenemos la capacidad de verla?
+      </p>
+    </div>
+
+    <div class="questions-grid">
+      <div class="question-card" onclick="toggleAnswer(this)">
+        <div class="q-number">01</div>
+        <h3>"¿Dónde queda la autonomía del consumidor cuando sus decisiones de compra están moldeadas por algoritmos que él no comprende?"</h3>
+        <button class="expand-btn">Reflexionar</button>
+        <div class="question-answer">
+          <p>La autonomía presupone conocimiento de las fuerzas que actúan sobre nosotros. Si el algoritmo opera en la sombra — eligiendo qué productos vemos, en qué contextos emocionales, con qué frecuencia — entonces la "elección libre" es una ilusión bien diseñada. La economía del comportamiento lleva décadas demostrando que nuestras decisiones están sistemáticamente sesgadas. La IA no crea este problema; lo escala exponencialmente.</p>
+        </div>
+      </div>
+
+      <div class="question-card" onclick="toggleAnswer(this)">
+        <div class="q-number">02</div>
+        <h3>"¿Qué significa elegir libremente cuando el deseo mismo puede ser inducido por una personalización tan precisa que parece adivinar nuestros gustos?"</h3>
+        <button class="expand-btn">Reflexionar</button>
+        <div class="question-answer">
+          <p>El deseo puede ser genuino y fabricado al mismo tiempo. El algoritmo no crea preferencias de la nada — trabaja con nuestras tendencias reales. Pero selecciona, amplifica y orienta esas tendencias hacia productos concretos. La pregunta filosófica de fondo es si el origen de un deseo afecta a su autenticidad. ¿Es menos "mío" el deseo que fue inducido si lo siento como propio?</p>
+        </div>
+      </div>
+
+      <div class="question-card" onclick="toggleAnswer(this)">
+        <div class="q-number">03</div>
+        <h3>"¿Es posible desarrollar una mirada crítica frente a una publicidad que ha aprendido a no parecer publicidad?"</h3>
+        <button class="expand-btn">Reflexionar</button>
+        <div class="question-answer">
+          <p>La alfabetización mediática tradicional enseñaba a identificar anuncios por su forma — el corte comercial, el banner, la valla. Pero cuando el anuncio se convierte en narración, en experiencia, en identidad, los marcadores formales desaparecen. Necesitamos una nueva forma de alfabetización: no detectar anuncios por su aspecto, sino por su función. Preguntarse siempre: ¿quién se beneficia de que yo vea esto?</p>
+        </div>
+      </div>
+
+      <div class="question-card" onclick="toggleAnswer(this)">
+        <div class="q-number">04</div>
+        <h3>"¿Cuándo la personalización se convierte en manipulación, y quién define esa frontera?"</h3>
+        <button class="expand-btn">Reflexionar</button>
+        <div class="question-answer">
+          <p>La regulación publicitaria existente fue diseñada para un mundo donde los anuncios eran identificables. El GDPR europeo intenta proteger los datos personales, pero no regula específicamente cómo esos datos pueden usarse para construir perfiles de influencia emocional. La frontera legal existe; la frontera ética es mucho más difusa. Y en esa difusión opera la publicidad más efectiva.</p>
+        </div>
+      </div>
+
+      <div class="question-card" onclick="toggleAnswer(this)">
+        <div class="q-number">05</div>
+        <h3>"¿Tenemos, como sociedad, la capacidad de ver la publicidad invisible antes de que perfeccione su invisibilidad?"</h3>
+        <button class="expand-btn">Reflexionar</button>
+        <div class="question-answer">
+          <p>La tecnología evoluciona más rápido que la conciencia social. Cuando la sociedad aprendió a identificar los anuncios televisivos como tales, la industria ya había migrado al product placement. Cuando el product placement se normalizó, la IA lo hizo invisible y personalizado. La carrera es asimétrica: las marcas tienen acceso a los mejores ingenieros y psicólogos del comportamiento. La defensa del consumidor depende de voluntad política y educación pública.</p>
+        </div>
+      </div>
+
+      <div class="question-card" onclick="toggleAnswer(this)">
+        <div class="q-number">06</div>
+        <h3>"¿Debe existir regulación sobre el product placement dinámico, y qué forma debería tomar?"</h3>
+        <button class="expand-btn">Reflexionar</button>
+        <div class="question-answer">
+          <p>Algunos marcos posibles: obligar a revelar cuándo un producto ha sido insertado digitalmente; requerir consentimiento explícito antes de construir perfiles publicitarios; prohibir el uso de datos emocionales o de salud mental para la segmentación; crear etiquetas de transparencia algorítmica similares a las nutricionales. Ninguna de estas soluciones es perfecta, pero la ausencia de regulación no es neutralidad — es una decisión política que favorece a las marcas.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ CONCLUSIÓN ══════════ -->
+  <section id="conclusion">
+    <div class="conclusion-grid">
+      <div class="conclusion-sidebar">
+        <h2>CONCLUSIÓN</h2>
+      </div>
+      <div class="conclusion-main">
+        <h3 class="reveal">"Cuanto más efectiva se vuelve la publicidad, menos la percibimos como tal."</h3>
+        <p class="reveal reveal-delay-1">
+          La inteligencia artificial ha transformado la publicidad en una experiencia que ya no interrumpe, sino que acompaña. Hoy, un consumidor puede estar viendo su serie favorita sin ser consciente de que la botella que aparece en pantalla ha sido seleccionada específicamente para él por un algoritmo.
+        </p>
+        <p class="reveal reveal-delay-2">
+          Esta capacidad de la IA para hacer "invisible" el mensaje publicitario — integrarlo en el entretenimiento y en la construcción de la identidad personal — plantea una paradoja inquietante: cuanto menos la percibimos, más vulnerables somos a su influencia.
+        </p>
+        <p class="reveal reveal-delay-3">
+          El problema no es la tecnología en sí misma, sino el contexto en el que opera. En una sociedad donde el consumo se ha convertido en un fin en sí mismo, donde las corporaciones disponen de herramientas cada vez más sofisticadas para conocer y persuadir a los individuos, <strong>la pregunta por los límites se vuelve ineludible</strong>.
+        </p>
+
+        <div class="open-questions reveal reveal-delay-4">
+          <h4>Las preguntas que este ensayo deja abiertas</h4>
+          <ul>
+            <li>¿Dónde queda la autonomía del consumidor cuando sus decisiones están moldeadas por algoritmos que no comprende?</li>
+            <li>¿Qué significa elegir libremente cuando el deseo mismo puede ser inducido?</li>
+            <li>¿Es posible desarrollar una mirada crítica frente a una publicidad que ha aprendido a no parecer publicidad?</li>
+            <li>La inteligencia artificial seguirá perfeccionando sus técnicas. La pregunta es si nosotros, como sociedad, desarrollaremos a tiempo la capacidad de <em>verla</em>.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ BIBLIOGRAFÍA ══════════ -->
+  <section id="bibliografia">
+    <div class="biblio-header">— Bibliografía y fuentes</div>
+    <div class="biblio-grid">
+      <div class="biblio-item">
+        <p>Martín García, A. (2025). Narrativa, tecnología y consumo: el papel de la inteligencia artificial en el futuro del product placement. Un estudio de Heineken en el cine y las plataformas digitales. <em>Revista de Comunicación de la SEECI</em>, 58, 1–22.</p>
+        <a href="https://doi.org/10.15198/seeci.2025.58.e912" target="_blank" rel="noopener">doi.org/10.15198/seeci.2025.58.e912</a>
+      </div>
+      <div class="biblio-item">
+        <p>Gilardini Ricci, P. (2025). El impacto de la inteligencia artificial en el marketing de contenidos y el comportamiento del consumidor. <em>Tesis doctoral</em>, Universitat de Vic - Universitat Central de Catalunya.</p>
+      </div>
+      <div class="biblio-item">
+        <p>Gemius. (2024, mayo). Dynamic Product Placement: The potential of using RPD data.</p>
+        <a href="https://gemius.com/blog/dynamic-product-placement-the-potential-of-using-rpd-data/" target="_blank" rel="noopener">gemius.com</a>
+      </div>
+      <div class="biblio-item">
+        <p>Rosety, L.C. (2024, abril). Cómo Heineken logró cubrir un tercio del presupuesto de 'Skyfall' con apenas unos segundos. <em>Tapas Magazine</em>.</p>
+        <a href="https://www.tapasmagazine.es/como-heineken-logro-cubrir-un-tercio-del-presupuesto-de-skyfall-con-apenas-unos-segundos/" target="_blank" rel="noopener">tapasmagazine.es</a>
+      </div>
+      <div class="biblio-item">
+        <p>Petovel, P. (2025, agosto). Johnnie Walker Blue Label dispara ventas con experiencia inmersiva y edición limitada. <em>Revista Merca2.0</em>.</p>
+        <a href="https://www.merca20.com/johnnie-walker-blue-label-ventas-experiencia-edicion-limitada/" target="_blank" rel="noopener">merca20.com</a>
+      </div>
+      <div class="biblio-item">
+        <p>Binge Society. (2024). The Truman Show (1998): Cocoa Scene. <em>YouTube</em>.</p>
+        <a href="https://www.youtube.com/watch?v=MzKSQrhX7BM" target="_blank" rel="noopener">youtube.com</a>
+      </div>
+      <div class="biblio-item">
+        <p>moviemaniacsDE. (2012). Skyfall James Bond 007 | Crack the Case Heineken spot (2012). <em>YouTube</em>.</p>
+        <a href="https://www.youtube.com/watch?v=VHz30rlNHCc" target="_blank" rel="noopener">youtube.com</a>
+      </div>
+      <div class="biblio-item">
+        <p>Erik. (2010). Product placement highlights – Royale with Cheese. <em>Brands & Films</em>.</p>
+        <a href="https://brandsandfilms.com/2010/04/product-placement-highlights-%E2%80%93-royale-with-cheese/" target="_blank" rel="noopener">brandsandfilms.com</a>
+      </div>
+      <div class="biblio-item">
+        <p>Lucasmatthew. (2014). The Quentin Tarantino brand. <em>Isenberg Marketing Blog</em>.</p>
+        <a href="https://isenbergmarketing.wordpress.com/2014/09/30/the-quentin-tarantino-brand/" target="_blank" rel="noopener">isenbergmarketing.wordpress.com</a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="footer-brand">Hiperconsumo 4.0</div>
+    <div class="footer-note">Ensayo multimedia · 2025 · Todos los derechos reservados</div>
+  </footer>
+
+  <script>
+    // Progress bar
+    window.addEventListener('scroll', () => {
+      const scrollTop = document.documentElement.scrollTop;
+      const scrollHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      const progress = (scrollTop / scrollHeight) * 100;
+      document.getElementById('progress-bar').style.width = progress + '%';
+    });
+
+    // Reveal on scroll
+    const revealElements = document.querySelectorAll('.reveal');
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -60px 0px' });
+
+    revealElements.forEach(el => revealObserver.observe(el));
+
+    // Interactive Q&A
+    function toggleAnswer(card) {
+      const answer = card.querySelector('.question-answer');
+      const btn = card.querySelector('.expand-btn');
+      const isOpen = answer.classList.contains('open');
+
+      // Close all
+      document.querySelectorAll('.question-answer').forEach(a => a.classList.remove('open'));
+      document.querySelectorAll('.expand-btn').forEach(b => b.textContent = 'Reflexionar');
+
+      if (!isOpen) {
+        answer.classList.add('open');
+        btn.textContent = 'Cerrar reflexión';
+      }
+    }
+
+    // Hero elements animate in
+    document.querySelectorAll('.hero-content .reveal').forEach((el, i) => {
+      setTimeout(() => el.classList.add('visible'), 300 + i * 200);
+    });
+
+    // Parallax subtle effect on hero
+    window.addEventListener('scroll', () => {
+      const scrollY = window.scrollY;
+      const heroBg = document.querySelector('.hero-bg');
+      if (heroBg && scrollY < window.innerHeight) {
+        heroBg.style.transform = `translateY(${scrollY * 0.3}px)`;
+      }
+    });
+  </script>
+</body>
+</html>
